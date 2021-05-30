@@ -50,21 +50,26 @@ class ContestsCog(commands.Cog):
         - `[p]contests submit <link to image or attach an image>`
         """
         async with ctx.channel.typing():
+            # Get channel information
             channel_id = await self.config.guild(ctx.guild).posting_channel()
             channel = ctx.guild.get_channel(channel_id)
-            tempfile = await ctx.message.attachments[0].read()
-            extension = mimetypes.guess_extension(ctx.message.attachments[0].content_type)
-            author = ctx.message.author.name
-            author_id = ctx.message.author.id
-            await ctx.message.delete()
-            filehash = hashlib.md5(tempfile)
-            filename = filehash.hexdigest()
-            complete_name = f"{filename}{extension}"
-            discordfile = discord.File(filename=complete_name, fp=(io.BytesIO(tempfile)))
-            await channel.send(content=filename, file=discordfile)
-            mapping = {
-                "author": author,
-                "author_id": author_id,
-                "filename": filename
-            }
-            await channel.send(content=(json.dumps(mapping)))
+            # Check if an attachment is present
+            if ctx.message.attachments:
+                tempfile = await ctx.message.attachments[0].read()
+                extension = mimetypes.guess_extension(ctx.message.attachments[0].content_type)
+                # Only allow image attachments
+                if extension in ['.jpg', '.png']:
+                    author = ctx.message.author.name
+                    author_id = ctx.message.author.id
+                    await ctx.message.delete()
+                    filehash = hashlib.md5(tempfile)
+                    filename = filehash.hexdigest()
+                    complete_name = f"{filename}{extension}"
+                    discordfile = discord.File(filename=complete_name, fp=(io.BytesIO(tempfile)))
+                    await channel.send(content=filename, file=discordfile)
+                    mapping = {
+                        "author": author,
+                        "author_id": author_id,
+                        "filename": filename
+                    }
+                    await channel.send(content=(json.dumps(mapping)))
